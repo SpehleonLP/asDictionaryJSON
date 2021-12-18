@@ -1,4 +1,4 @@
-#include "dictionary_json.h"
+#include "dictionary_extensions.h"
 #include "add_on/scriptdictionary/scriptdictionary.h"
 #include "add_on/scriptarray/scriptarray.h"
 #include <sstream>
@@ -124,20 +124,27 @@ void asRegisterDictionaryExtensions(asIScriptEngine * engine,  StringNormalizeFu
 }
 
 
-static bool asToJSON_String(std::ostream & stream, CScriptDictionary * dict, int depth, std::string indent, bool compressWhitespace);
-static bool asToJSON_String(std::ostream & stream, CScriptArray * array, int depth, std::string indent, bool compressWhitespace);
-static bool asToJSON_String(std::ostream & stream, const char * field, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace);
-static bool asToJSON_String(std::ostream & stream, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace);
+static bool asToJSON_String(std::vector<void *> & object_stack,std::ostream & stream, CScriptDictionary * dict, int depth, std::string indent, bool compressWhitespace);
+static bool asToJSON_String(std::vector<void *> & object_stack,std::ostream & stream, CScriptArray * array, int depth, std::string indent, bool compressWhitespace);
+static bool asToJSON_String(std::vector<void *> & object_stack,std::ostream & stream, const char * field, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace);
+static bool asToJSON_String(std::vector<void *> & object_stack,std::ostream & stream, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace);
 static bool CanSerialize(asIScriptEngine * engine, int asTypeId);
 static std::string EscapeString(std::string s);
 
 void asToJSON_String(std::ostream & stream, CScriptDictionary * dict, bool compressWhitespace)
 {
-	asToJSON_String(stream, dict, 1, compressWhitespace? " " : "\n", compressWhitespace);
+	if(dict == nullptr)
+		return;
+
+	std::vector<void *> object_stack;
+	asToJSON_String(object_stack, stream, dict, 1, compressWhitespace? " " : "\n", compressWhitespace);
+	assert(object_stack.empty());
 }
 
-static bool asToJSON_String(std::ostream & stream, CScriptDictionary * dict, int depth, std::string indent, bool compressWhitespace)
+static bool asToJSON_String(std::vector<void *> & object_stack, std::ostream & stream, CScriptDictionary * dict, int depth, std::string indent, bool compressWhitespace)
 {
+	object_stack.push_back(dict);
+
 	if(depth) stream << indent;
 
 	if(!compressWhitespace)
@@ -164,7 +171,7 @@ static bool asToJSON_String(std::ostream & stream, CScriptDictionary * dict, int
 		}
 
 
-		asToJSON_String(stream, i.GetKey().c_str(), i.GetTypeId(), i.GetAddressOfValue(), depth+1, indent, compressWhitespace);
+		asToJSON_String(object_stack, stream, i.GetKey().c_str(), i.GetTypeId(), i.GetAddressOfValue(), depth+1, indent, compressWhitespace);
 		first = false;
 	}
 
@@ -172,6 +179,10 @@ static bool asToJSON_String(std::ostream & stream, CScriptDictionary * dict, int
 		indent.resize(depth, '\t');
 
 	stream << indent << "}";
+
+	assert(object_stack.back() == dict);
+	object_stack.pop_back();
+
 	return true;
 }
 
@@ -195,8 +206,10 @@ static bool CanSerialize(asIScriptEngine * engine, int asTypeId)
 }
 
 
-static bool asToJSON_String(std::ostream & stream, CScriptArray * array, int depth, std::string indent, bool compressWhitespace)
+static bool asToJSON_String(std::vector<void *> & object_stack, std::ostream & stream, CScriptArray * array, int depth, std::string indent, bool compressWhitespace)
 {
+	object_stack.push_back(array);
+
 	bool r = false;
 
 	if(!compressWhitespace)
@@ -211,21 +224,26 @@ static bool asToJSON_String(std::ostream & stream, CScriptArray * array, int dep
 				stream << ", ";
 		}
 
-		r |= asToJSON_String(stream, array->GetElementTypeId(), array->At(i), depth, indent, compressWhitespace);
+		r |= asToJSON_String(object_stack, stream, array->GetElementTypeId(), array->At(i), depth, indent, compressWhitespace);
 	}
 
 	stream << "]";
+
+
+	assert(object_stack.back() == array);
+	object_stack.pop_back();
+
 	return r;
 }
 
-static bool asToJSON_String(std::ostream & stream, const char * field, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace)
+static bool asToJSON_String(std::vector<void *> & object_stack, std::ostream & stream, const char * field, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace)
 {
 	stream << "\"" << EscapeString(field) << "\": ";
-	return asToJSON_String(stream, typeId, object, depth, std::move(indent), compressWhitespace);
+	return asToJSON_String(object_stack, stream, typeId, object, depth, std::move(indent), compressWhitespace);
 }
 
 
-static bool asToJSON_String(std::ostream & stream, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace)
+static bool asToJSON_String(std::vector<void *> & object_stack, std::ostream & stream, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace)
 {
 	if(object == nullptr)
 	{
@@ -236,6 +254,15 @@ static bool asToJSON_String(std::ostream & stream, int typeId, void const* objec
 	if(typeId & asTYPEID_OBJHANDLE)
 	{
 		object = *(void**)object;
+	}
+
+	for(auto & c : object_stack)
+	{
+		if(c == object)
+		{
+			stream << "null";
+			return false;
+		}
 	}
 
 	stream.setf(std::ios::fixed,std::ios::floatfield);
@@ -282,12 +309,12 @@ static bool asToJSON_String(std::ostream & stream, int typeId, void const* objec
 
 	if(strcmp(typeInfo->GetName(), "dictionary") == 0)
 	{
-		return asToJSON_String(stream, (CScriptDictionary*)object, depth, std::move(indent), compressWhitespace);
+		return asToJSON_String(object_stack, stream, (CScriptDictionary*)object, depth, std::move(indent), compressWhitespace);
 	}
 
 	if(strcmp(typeInfo->GetName(), "array") == 0)
 	{
-		return asToJSON_String(stream, (CScriptArray*)object, depth, std::move(indent), compressWhitespace);
+		return asToJSON_String(object_stack, stream, (CScriptArray*)object, depth, std::move(indent), compressWhitespace);
 	}
 
 	return false;
@@ -424,6 +451,9 @@ private:
 CScriptDictionary * asFromJSON_String(std::string stream,  asIScriptEngine * engine)
 {
 	JSONTokenRange tokenizer(stream, engine);
+
+	if(strcmp(tokenizer.front(), "{"))
+		return nullptr;
 
 	CScriptDictionary * dict = CScriptDictionary::Create(engine);
 
@@ -756,3 +786,4 @@ static void asFromJSON_String(JSONTokenRange & stream, JSON_ANY & value, int & t
 
 	throw std::runtime_error("unexpected token: " + std::string(stream.front()));
 }
+
