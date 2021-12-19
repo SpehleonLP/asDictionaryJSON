@@ -1,4 +1,4 @@
-#include "dictionary_extensions.h"
+#include "../../../asDictionaryJSON/dictionary_json.h"
 #include "add_on/scriptdictionary/scriptdictionary.h"
 #include "add_on/scriptarray/scriptarray.h"
 #include <sstream>
