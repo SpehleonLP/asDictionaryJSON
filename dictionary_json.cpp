@@ -380,8 +380,8 @@ struct JSONTokenRange
 		asTypeIdString(engine->GetTypeIdByDecl("string")),
 		begin(string.data()),
 		end(string.data() + string.size()),
-		tokBegin(string.data()),
-		tokEnd(string.data()),
+		tokBegin(&string[0]),
+		tokEnd(&string[0]),
 		swapChar(tokBegin? *tokBegin : 0)
 	{
 		popFront();
