@@ -124,24 +124,24 @@ void asRegisterDictionaryExtensions(asIScriptEngine * engine,  StringNormalizeFu
 }
 
 
-static bool asToJSON_String(std::vector<void *> & object_stack,std::ostream & stream, CScriptDictionary * dict, int depth, std::string indent, bool compressWhitespace);
-static bool asToJSON_String(std::vector<void *> & object_stack,std::ostream & stream, CScriptArray * array, int depth, std::string indent, bool compressWhitespace);
-static bool asToJSON_String(std::vector<void *> & object_stack,std::ostream & stream, const char * field, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace);
-static bool asToJSON_String(std::vector<void *> & object_stack,std::ostream & stream, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace);
+static bool asToJSON_String(std::vector<void const*> & object_stack,std::ostream & stream, CScriptDictionary const* dict, int depth, std::string indent, bool compressWhitespace);
+static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostream & stream, CScriptArray const* array, int depth, std::string indent, bool compressWhitespace);
+static bool asToJSON_String(std::vector<void const*> & object_stack,std::ostream & stream, const char * field, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace);
+static bool asToJSON_String(std::vector<void const*> & object_stack,std::ostream & stream, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace);
 static bool CanSerialize(asIScriptEngine * engine, int asTypeId);
 static std::string EscapeString(std::string s);
 
-void asToJSON_String(std::ostream & stream, CScriptDictionary * dict, bool compressWhitespace)
+void asToJSON_String(std::ostream & stream, const CScriptDictionary * dict, bool compressWhitespace)
 {
 	if(dict == nullptr)
 		return;
 
-	std::vector<void *> object_stack;
+	std::vector<void const*> object_stack;
 	asToJSON_String(object_stack, stream, dict, 1, compressWhitespace? " " : "\n", compressWhitespace);
 	assert(object_stack.empty());
 }
 
-static bool asToJSON_String(std::vector<void *> & object_stack, std::ostream & stream, CScriptDictionary * dict, int depth, std::string indent, bool compressWhitespace)
+static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostream & stream, CScriptDictionary const* dict, int depth, std::string indent, bool compressWhitespace)
 {
 	object_stack.push_back(dict);
 
@@ -206,7 +206,7 @@ static bool CanSerialize(asIScriptEngine * engine, int asTypeId)
 }
 
 
-static bool asToJSON_String(std::vector<void *> & object_stack, std::ostream & stream, CScriptArray * array, int depth, std::string indent, bool compressWhitespace)
+static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostream & stream, const CScriptArray * array, int depth, std::string indent, bool compressWhitespace)
 {
 	object_stack.push_back(array);
 
@@ -236,14 +236,14 @@ static bool asToJSON_String(std::vector<void *> & object_stack, std::ostream & s
 	return r;
 }
 
-static bool asToJSON_String(std::vector<void *> & object_stack, std::ostream & stream, const char * field, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace)
+static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostream & stream, const char * field, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace)
 {
 	stream << "\"" << EscapeString(field) << "\": ";
 	return asToJSON_String(object_stack, stream, typeId, object, depth, std::move(indent), compressWhitespace);
 }
 
 
-static bool asToJSON_String(std::vector<void *> & object_stack, std::ostream & stream, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace)
+static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostream & stream, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace)
 {
 	if(object == nullptr)
 	{

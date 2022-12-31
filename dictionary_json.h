@@ -10,7 +10,7 @@ typedef std::string (*StringNormalizeFunc)(std::string);
 
 void asRegisterDictionaryExtensions(asIScriptEngine * engine, StringNormalizeFunc UnicodeNormalization = nullptr, StringNormalizeFunc PathNormalization = nullptr);
 
-void asToJSON_String(std::ostream & stream, CScriptDictionary * dict, bool compressWhitespace);
+void asToJSON_String(std::ostream & stream, CScriptDictionary const* dict, bool compressWhitespace);
 //ifstream is just the wrong base class to tokenize from
 CScriptDictionary * asFromJSON_String(std::string stream, asIScriptEngine * engine);
 
