@@ -619,8 +619,7 @@ static void asFromJSON_String(JSONTokenRange & stream, CScriptArray *& array)
 
 }
 
-
-std::string GetFullTypeName(asIScriptEngine * engine, int typeId)
+const char * GetPrimitiveTypeName(int typeId)
 {
 	switch(typeId)
 	{
@@ -638,6 +637,14 @@ std::string GetFullTypeName(asIScriptEngine * engine, int typeId)
 	default:
 		break;
 	}
+
+	return "";
+}
+
+std::string GetFullTypeName(asIScriptEngine * engine, int typeId)
+{
+	auto op = GetPrimitiveTypeName(typeId);
+	if(*op) return op;
 
 	auto typeInfo = engine->GetTypeInfoById(typeId);
 
