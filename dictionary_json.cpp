@@ -114,12 +114,12 @@ void asRegisterDictionaryExtensions(asIScriptEngine * engine,  StringNormalizeFu
 	int r;
 	r = engine->SetDefaultNamespace("dictionary"); assert(r >= 0);
 
-	r = engine->RegisterGlobalFunction("dictionary@ FromJsonFile(string &in)", asFUNCTION(asLoadFromFile), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("dictionary@ FromJsonString(string &in)", asFUNCTION(asLoadFromString), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("dictionary@ FromJsonFile(const string &in)", asFUNCTION(asLoadFromFile), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("dictionary@ FromJsonString(const string &in)", asFUNCTION(asLoadFromString), asCALL_CDECL); assert(r >= 0);
 
 	r = engine->SetDefaultNamespace(""); assert(r >= 0);
 
-	r = engine->RegisterObjectMethod("dictionary", "void toJsonFile(string &in)", asFUNCTION(asSaveToFile), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectMethod("dictionary", "void toJsonFile(const string &in)", asFUNCTION(asSaveToFile), asCALL_CDECL_OBJLAST); assert(r >= 0);
 	r = engine->RegisterObjectMethod("dictionary", "string toJsonString()", asFUNCTION(asSaveToString), asCALL_CDECL_OBJLAST); assert(r >= 0);
 }
 
