@@ -6,7 +6,7 @@ class asIScriptEngine;
 class asDocumenter;
 class CScriptDictionary;
 
-typedef std::string (*StringNormalizeFunc)(std::string_view);
+typedef std::string (*StringNormalizeFunc)(std::string const&);
 
 void asRegisterDictionaryExtensions(asIScriptEngine * engine, StringNormalizeFunc UnicodeNormalization = nullptr, StringNormalizeFunc PathNormalization = nullptr);
 

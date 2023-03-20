@@ -9,7 +9,7 @@
 #include <algorithm>
 
 
-static std::string DefaultNormalize(std::string_view s) { return std::string(s); }
+static std::string DefaultNormalize(std::string const& s) { return std::string(s); }
 static StringNormalizeFunc g_UnicodeFunc{&DefaultNormalize};
 static StringNormalizeFunc g_PathFunc{&DefaultNormalize};
 
