@@ -131,6 +131,94 @@ static bool asToJSON_String(std::vector<void const*> & object_stack,std::ostream
 static bool CanSerialize(asIScriptEngine * engine, int asTypeId);
 static std::string EscapeString(std::string s);
 
+
+bool CanSerializeArray(std::vector<void const*> stack, asIScriptEngine * engine, CScriptArray const* dict);
+bool CanSerializeDictionary(std::vector<void const*> stack, asIScriptEngine * engine, CScriptDictionary const* dict);
+
+
+bool CanSerializeDictionary(CScriptDictionary const* dict)
+{
+	std::vector<void const*> stack;
+	return CanSerializeDictionary(stack, dict->GetEngine(), dict);
+}
+
+bool CanSerializeRecursive(std::vector<void const*> stack, asIScriptEngine * engine, int typeId, void const* ref)
+{
+	if((typeId & asTYPEID_MASK_SEQNBR) == typeId
+	|| typeId == engine->GetStringFactoryReturnTypeId())
+		return true;
+
+	auto typeInfo = engine->GetTypeInfoById(typeId);
+
+	if(typeInfo->GetFlags() & asOBJ_POD)
+		return true;
+
+	if(typeId & asTYPEID_OBJHANDLE)
+		ref = *(void**)ref;
+
+	if(strcmp(typeInfo->GetName(), "dictionary"))
+	{
+		return CanSerializeDictionary(stack, engine, reinterpret_cast<CScriptDictionary const*>(ref));
+	}
+
+	if(strcmp(typeInfo->GetName(), "array"))
+	{
+		return CanSerializeArray(stack, engine, reinterpret_cast<CScriptArray const*>(ref));
+	}
+
+	return false;
+}
+
+bool CanSerializeDictionary(std::vector<void const*> stack, asIScriptEngine * engine, CScriptDictionary const* dict)
+{
+	for(auto x : stack)
+	{
+		if(x == dict)
+			return false;
+	}
+
+	stack.push_back(dict);
+
+	for(auto i = dict->begin(); i != dict->end(); ++i)
+	{
+		if(!CanSerializeRecursive(stack, engine, i.GetTypeId(), i.GetAddressOfValue()))
+		{
+			assert(stack.back() == dict);
+			stack.pop_back();
+			return false;
+		}
+	}
+
+	assert(stack.back() == dict);
+	stack.pop_back();
+
+	return true;
+}
+
+bool CanSerializeArray(std::vector<void const*> stack, asIScriptEngine * engine, CScriptArray const* dict)
+{
+	for(auto x : stack)
+	{
+		if(x == dict)
+			throw std::logic_error("Dictionary contains cyclic references");
+	}
+
+	for(auto i = 0u; i != dict->GetSize(); ++i)
+	{
+		if(!CanSerializeRecursive(stack, engine, dict->GetElementTypeId(), dict->At(i)))
+		{
+			assert(stack.back() == dict);
+			stack.pop_back();
+			return false;
+		}
+	}
+
+	assert(stack.back() == dict);
+	stack.pop_back();
+
+	return true;
+}
+
 void asToJSON_String(std::ostream & stream, const CScriptDictionary * dict, bool compressWhitespace)
 {
 	if(dict == nullptr)
@@ -188,7 +276,7 @@ static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostrea
 
 static bool CanSerialize(asIScriptEngine * engine, int asTypeId)
 {
-	if(asTypeId <= asTYPEID_DOUBLE)
+	if((asTypeId & asTYPEID_MASK_SEQNBR) == asTypeId)
 		return true;
 
 	auto typeInfo = engine->GetTypeInfoById(asTypeId);
