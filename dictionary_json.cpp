@@ -13,7 +13,7 @@ static std::string DefaultNormalize(std::string const& s) { return std::string(s
 static StringNormalizeFunc g_UnicodeFunc{&DefaultNormalize};
 static StringNormalizeFunc g_PathFunc{&DefaultNormalize};
 
-static CScriptDictionary  * asLoadFromFile(std::string path)
+static CScriptDictionary  * asLoadFromFile(std::string const& path)
 {
 	std::string contents;
 
@@ -47,11 +47,11 @@ static CScriptDictionary  * asLoadFromFile(std::string path)
 	return nullptr;
 }
 
-static CScriptDictionary * asLoadFromString(std::string text)
+static CScriptDictionary * asLoadFromString(const std::string & text)
 {
 	try
 	{
-		return asFromJSON_String(std::move(text), asGetActiveContext()->GetEngine());
+		return asFromJSON_String(text, asGetActiveContext()->GetEngine());
 	}
 	catch(std::exception & e)
 	{
@@ -61,11 +61,11 @@ static CScriptDictionary * asLoadFromString(std::string text)
 	return nullptr;
 }
 
-void asSaveToFile(std::string path, CScriptDictionary * in)
+void asSaveToFile(std::string const& path, CScriptDictionary * in)
 {
 	try
 	{
-		std::ofstream stream(g_PathFunc(std::move(path)));
+		std::ofstream stream(g_PathFunc(path));
 
 		if(!stream.is_open())
 		{
@@ -844,11 +844,14 @@ static void asFromJSON_String(JSONTokenRange & stream, JSON_ANY & value, int & t
 
 	if(JSONTokenRange::ischar(*stream.front(), "'\"`"))
 	{
-		std::string * str = (std::string*)asAllocMem(sizeof(std::string));
-		new(str) std::string(CleanString(stream.front(), stream.back()));
+		auto content = CleanString(stream.front(), stream.back());
+		auto typeInfo = stream.engine->GetTypeInfoById(stream.engine->GetStringFactoryReturnTypeId());
 
-		value.obj  = str;
+		value.obj  = stream.engine->CreateScriptObjectCopy(&content, typeInfo);
 		typeId     = stream.asTypeIdString;
+
+		value.obj  = 0;
+		typeId     = asTYPEID_DOUBLE;
 		return;
 	}
 
