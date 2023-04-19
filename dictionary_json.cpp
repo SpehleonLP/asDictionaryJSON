@@ -435,13 +435,13 @@ std::string EscapeString(std::string s)
 
 struct JSONTokenRange;
 
-union JSON_ANY
-{
-	bool   boolean;
-	asINT64 _int{};
-	double  dbl;
-	void  * obj;
-};
+	union JSON_ANY
+	{
+		bool   boolean;
+		asINT64 _int{};
+		double  dbl;
+		void  * obj;
+	};
 
 static void asFromJSON_String(JSONTokenRange & stream, CScriptDictionary * dict);
 static void asFromJSON_String(JSONTokenRange & stream, CScriptArray *& array);
@@ -770,7 +770,7 @@ void FreePairVec(asIScriptEngine * engine, std::vector<std::pair<JSON_ANY, int> 
 {
 	for(asUINT i = 0; i < vec.size(); ++i)
 	{
-		engine->ReleaseScriptObject(&vec[i].first, engine->GetTypeInfoById(vec[i].second));
+		engine->ReleaseScriptObject(vec[i].first.obj, engine->GetTypeInfoById(vec[i].second));
 	}
 }
 
@@ -844,7 +844,10 @@ static void asFromJSON_String(JSONTokenRange & stream, JSON_ANY & value, int & t
 
 	if(JSONTokenRange::ischar(*stream.front(), "'\"`"))
 	{
-		value.obj  = new std::string(CleanString(stream.front(), stream.back()));
+		std::string * str = (std::string*)asAllocMem(sizeof(std::string));
+		new(str) std::string(CleanString(stream.front(), stream.back()));
+
+		value.obj  = str;
 		typeId     = stream.asTypeIdString;
 		return;
 	}
