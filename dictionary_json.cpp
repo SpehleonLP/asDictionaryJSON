@@ -246,7 +246,7 @@ static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostrea
     stream << "{";
 
     bool first = true;
-    for(auto i = dict->begin(); i != dict->end(); ++i)
+    for(auto & i : *dict)
     {
         if(!CanSerialize(asGetActiveContext()->GetEngine(), i.GetTypeId()))
         {
@@ -287,7 +287,7 @@ static bool CanSerialize(asIScriptEngine * engine, int asTypeId)
     auto typeInfo = engine->GetTypeInfoById(asTypeId);
 
     if(strcmp(typeInfo->GetName(), "string") == 0
-    || strcmp(typeInfo->GetName(), "dictionary"))
+    || strcmp(typeInfo->GetName(), "dictionary") == 0)
         return true;
 
     if(strcmp(typeInfo->GetName(), "array") == 0)
@@ -338,15 +338,15 @@ static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostrea
 
 static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostream & stream, int typeId, void const* object, int depth, std::string indent, bool compressWhitespace)
 {
+    if(typeId & asTYPEID_OBJHANDLE && object)
+    {
+        object = *(void**)object;
+    }
+
     if(object == nullptr)
     {
         stream << "null";
         return false;
-    }
-
-    if(typeId & asTYPEID_OBJHANDLE)
-    {
-        object = *(void**)object;
     }
 
     for(auto & c : object_stack)
@@ -394,6 +394,25 @@ static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostrea
 
     auto typeInfo = asGetActiveContext()->GetEngine()->GetTypeInfoById(typeId);
 
+    if((typeId & asTYPEID_MASK_SEQNBR) == typeId)
+    {
+        auto N = typeInfo->GetEnumValueCount();
+        for(auto i = 0u; i < N; ++i)
+        {
+            int enumValue = 0;
+            const char * name = typeInfo->GetEnumValueByIndex(i, &enumValue);
+
+            if(enumValue == *(const  int32_t*)object)
+            {
+                stream << '\"' << name << '\"';
+                return false;
+            }
+        }
+
+        stream << *(const  int32_t*)object;
+        return false;
+    }
+
     if(strcmp(typeInfo->GetName(), "string") == 0)
     {
         stream << '\"' << EscapeString(*(std::string*)object) << '\"';
@@ -408,6 +427,12 @@ static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostrea
     if(strcmp(typeInfo->GetName(), "array") == 0)
     {
         return asToJSON_String(object_stack, stream, (CScriptArray*)object, depth, std::move(indent), compressWhitespace);
+    }
+
+    if(strcmp(typeInfo->GetName(), "dictionaryValue") == 0)
+    {
+        auto & value = *(CScriptDictValue*)object;
+        return asToJSON_String(object_stack, stream, value.GetTypeId(), value.GetAddressOfValue(), depth, std::move(indent), compressWhitespace);
     }
 
     return false;
@@ -855,8 +880,6 @@ static void asFromJSON_String(JSONTokenRange & stream, JSON_ANY & value, int & t
         value.obj  = stream.engine->CreateScriptObjectCopy(&content, typeInfo);
         typeId     = stream.asTypeIdString;
 
-        value.obj  = 0;
-        typeId     = asTYPEID_DOUBLE;
         return;
     }
 
