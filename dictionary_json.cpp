@@ -375,7 +375,7 @@ static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostrea
     case asTYPEID_FLOAT:
     {
         char buffer[16];
-        snprintf(buffer, sizeof(buffer), ".6%f", *(const float*)object);
+        snprintf(buffer, sizeof(buffer), "%g", *(const float*)object);
 
         stream << buffer;
         return false;
@@ -383,7 +383,7 @@ static bool asToJSON_String(std::vector<void const*> & object_stack, std::ostrea
     case asTYPEID_DOUBLE:
     {
         char buffer[16];
-        snprintf(buffer, sizeof(buffer), "%.10lf", *(const double*)object);
+        snprintf(buffer, sizeof(buffer), "%lg", *(const double*)object);
 
         stream << buffer;
         return false;
