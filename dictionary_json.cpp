@@ -582,7 +582,13 @@ CScriptDictionary * asFromJSON_String(std::string stream,  asIScriptEngine * eng
     catch(std::exception & e)
     {
         dict->Release();
-        throw;
+		
+		auto ctx = asGetActiveContext();
+		
+		if(ctx)
+			ctx->SetException(e.what());
+		else
+			throw e;
     }
 
     return dict;
