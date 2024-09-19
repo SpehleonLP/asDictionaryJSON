@@ -150,7 +150,7 @@ bool CanSerializeDictionary(CScriptDictionary const* dict)
 bool CanSerializeRecursive(std::vector<void const*> stack, asIScriptEngine * engine, int typeId, void const* ref)
 {
     if((typeId & asTYPEID_MASK_SEQNBR) == typeId
-    || typeId == engine->GetStringFactoryReturnTypeId())
+	|| typeId == engine->GetStringFactory(nullptr, nullptr))
         return true;
 
     auto typeInfo = engine->GetTypeInfoById(typeId);
@@ -881,7 +881,7 @@ static void asFromJSON_String(JSONTokenRange & stream, JSON_ANY & value, int & t
     if(JSONTokenRange::ischar(*stream.front(), "'\"`"))
     {
         auto content = CleanString(stream.front(), stream.back());
-        auto typeInfo = stream.engine->GetTypeInfoById(stream.engine->GetStringFactoryReturnTypeId());
+		auto typeInfo = stream.engine->GetTypeInfoById(stream.engine->GetStringFactory(nullptr, nullptr));
 
         value.obj  = stream.engine->CreateScriptObjectCopy(&content, typeInfo);
         typeId     = stream.asTypeIdString;
