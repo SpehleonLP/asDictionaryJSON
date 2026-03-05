@@ -1,5 +1,5 @@
-#include "../../../asDictionaryJSON/dictionary_json.h"
-#include "add_on/scriptdictionary/scriptdictionary.h"
+#include "dictionary_json.h"
+#include "AngelScript/ScriptJson/scriptjson.h"
 #include "add_on/scriptarray/scriptarray.h"
 #include <iomanip>
 #include <sstream>
