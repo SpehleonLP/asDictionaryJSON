@@ -1,6 +1,7 @@
 #include "dictionary_json.h"
 #include "AngelScript/ScriptJson/scriptjson.h"
 #include "add_on/scriptarray/scriptarray.h"
+#include "AngelScript/script_concurrency.h"
 #include <iomanip>
 #include <sstream>
 #include <fstream>
@@ -119,13 +120,13 @@ void asRegisterDictionaryExtensions(asIScriptEngine * engine,  StringNormalizeFu
     int r;
     r = engine->SetDefaultNamespace("dictionary"); assert(r >= 0);
 
-    r = engine->RegisterGlobalFunction("dictionary@ FromJsonFile(const string &in)", asFUNCTION(asLoadFromFile), asCALL_CDECL); assert(r >= 0);
-    r = engine->RegisterGlobalFunction("dictionary@ FromJsonString(const string &in)", asFUNCTION(asLoadFromString), asCALL_CDECL); assert(r >= 0);
+    r = SetConcurrency(engine, engine->RegisterGlobalFunction("dictionary@ FromJsonFile(const string &in)", asFUNCTION(asLoadFromFile), asCALL_CDECL), ScriptConcurrency::Unsafe); assert(r >= 0);
+    r = SetConcurrency(engine, engine->RegisterGlobalFunction("dictionary@ FromJsonString(const string &in)", asFUNCTION(asLoadFromString), asCALL_CDECL), ScriptConcurrency::Unsafe); assert(r >= 0);
 
     r = engine->SetDefaultNamespace(""); assert(r >= 0);
 
-    r = engine->RegisterObjectMethod("dictionary", "void toJsonFile(const string &in)", asFUNCTION(asSaveToFile), asCALL_CDECL_OBJLAST); assert(r >= 0);
-    r = engine->RegisterObjectMethod("dictionary", "string toJsonString()", asFUNCTION(asSaveToString), asCALL_CDECL_OBJLAST); assert(r >= 0);
+    r = SetConcurrency(engine, engine->RegisterObjectMethod("dictionary", "void toJsonFile(const string &in)", asFUNCTION(asSaveToFile), asCALL_CDECL_OBJLAST), ScriptConcurrency::Unsafe); assert(r >= 0);
+    r = SetConcurrency(engine, engine->RegisterObjectMethod("dictionary", "string toJsonString()", asFUNCTION(asSaveToString), asCALL_CDECL_OBJLAST), ScriptConcurrency::Unsafe); assert(r >= 0);
 }
 
 
