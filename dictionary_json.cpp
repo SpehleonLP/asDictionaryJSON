@@ -120,13 +120,13 @@ void asRegisterDictionaryExtensions(asIScriptEngine * engine,  StringNormalizeFu
     int r;
     r = engine->SetDefaultNamespace("dictionary"); assert(r >= 0);
 
-    r = SetConcurrency(engine, engine->RegisterGlobalFunction("dictionary@ FromJsonFile(const string &in)", asFUNCTION(asLoadFromFile), asCALL_CDECL), ScriptConcurrency::Unsafe); assert(r >= 0);
-    r = SetConcurrency(engine, engine->RegisterGlobalFunction("dictionary@ FromJsonString(const string &in)", asFUNCTION(asLoadFromString), asCALL_CDECL), ScriptConcurrency::Unsafe); assert(r >= 0);
+    r = SetFootprint(engine, engine->RegisterGlobalFunction("dictionary@ FromJsonFile(const string &in)", asFUNCTION(asLoadFromFile), asCALL_CDECL), Footprint::Unsafe); assert(r >= 0);
+    r = SetFootprint(engine, engine->RegisterGlobalFunction("dictionary@ FromJsonString(const string &in)", asFUNCTION(asLoadFromString), asCALL_CDECL), Footprint::Unsafe); assert(r >= 0);
 
     r = engine->SetDefaultNamespace(""); assert(r >= 0);
 
-    r = SetConcurrency(engine, engine->RegisterObjectMethod("dictionary", "void toJsonFile(const string &in)", asFUNCTION(asSaveToFile), asCALL_CDECL_OBJLAST), ScriptConcurrency::Unsafe); assert(r >= 0);
-    r = SetConcurrency(engine, engine->RegisterObjectMethod("dictionary", "string toJsonString()", asFUNCTION(asSaveToString), asCALL_CDECL_OBJLAST), ScriptConcurrency::Unsafe); assert(r >= 0);
+    r = SetFootprint(engine, engine->RegisterObjectMethod("dictionary", "void toJsonFile(const string &in)", asFUNCTION(asSaveToFile), asCALL_CDECL_OBJLAST), Footprint::Unsafe); assert(r >= 0);
+    r = SetFootprint(engine, engine->RegisterObjectMethod("dictionary", "string toJsonString()", asFUNCTION(asSaveToString), asCALL_CDECL_OBJLAST), Footprint::Unsafe); assert(r >= 0);
 }
 
 
